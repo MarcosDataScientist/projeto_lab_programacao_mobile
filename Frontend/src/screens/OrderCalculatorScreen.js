@@ -10,12 +10,16 @@ import {
   Alert,
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { api } from "../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Picker } from "@react-native-picker/picker";
+import { useTheme } from "../context/ThemeContext";
 
 export default function OrderCalculatorScreen({ navigation }) {
+  const { theme, isDarkMode } = useTheme();
   const [products, setProducts] = useState([]);
   const [orderItems, setOrderItems] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState("");
@@ -24,6 +28,7 @@ export default function OrderCalculatorScreen({ navigation }) {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [result, setResult] = useState(null);
+  const styles = createStyles(theme);
 
   useEffect(() => {
     loadProducts();
@@ -130,10 +135,19 @@ export default function OrderCalculatorScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom", "top"]}>
-      <ScrollView style={styles.container}>
-        <StatusBar style={styles.statusBar} />
-        <Text style={styles.title}>Calculadora de Margem de Pedido</Text>
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView
+          style={[styles.container, { paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }]}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <StatusBar style={isDarkMode ? "light" : "dark"} translucent={true} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Adicionar Item</Text>
@@ -291,37 +305,42 @@ export default function OrderCalculatorScreen({ navigation }) {
             ))}
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
+  },
+  keyboardView: {
+    flex: 1,
   },
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
   },
-  statusBar: {
-    barStyle: "light-content",
+  scrollContent: {
+    paddingBottom: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "700",
     marginTop: 12,
     marginBottom: 16,
+    color: theme.text,
   },
   section: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.surface,
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.border,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -333,36 +352,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 12,
+    color: theme.text,
   },
   label: {
     fontSize: 14,
     fontWeight: "600",
     marginTop: 12,
     marginBottom: 4,
+    color: theme.text,
   },
   input: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: theme.inputBackground,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.inputBorder,
+    color: theme.text,
   },
   pickerContainer: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: theme.inputBackground,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.inputBorder,
     marginBottom: 4,
   },
   picker: {
     height: 50,
+    color: theme.text,
   },
   loading: {
     marginVertical: 16,
   },
   addButton: {
-    backgroundColor: "#10B981",
+    backgroundColor: theme.success,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -378,11 +401,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   clearButtonText: {
-    color: "#DC2626",
+    color: theme.error,
     fontWeight: "600",
   },
   emptyText: {
-    color: "#6B7280",
+    color: theme.textSecondary,
     textAlign: "center",
     paddingVertical: 16,
   },
@@ -391,9 +414,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 12,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: theme.surface,
     borderRadius: 8,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   orderItemInfo: {
     flex: 1,
@@ -402,21 +427,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 4,
+    color: theme.text,
   },
   orderItemDetails: {
     fontSize: 14,
-    color: "#6B7280",
+    color: theme.textSecondary,
   },
   removeButton: {
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   removeButtonText: {
-    color: "#DC2626",
+    color: theme.error,
     fontWeight: "500",
   },
   calculateButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -431,20 +457,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   resultContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.surface,
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.border,
   },
   resultTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 16,
+    color: theme.text,
   },
   summaryContainer: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: theme.background,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -458,46 +485,52 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#D1D5DB",
+    borderTopColor: theme.border,
   },
   summaryLabel: {
     fontSize: 14,
-    color: "#6B7280",
+    color: theme.textSecondary,
   },
   summaryValue: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#059669",
+    color: theme.success,
   },
   marginValue: {
     fontSize: 18,
     fontWeight: "700",
+    color: theme.success,
   },
   detailsTitle: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 12,
+    color: theme.text,
   },
   detailItem: {
     padding: 12,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: theme.background,
     borderRadius: 8,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   detailItemName: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 4,
+    color: theme.text,
   },
   detailItemText: {
     fontSize: 14,
-    color: "#6B7280",
+    color: theme.textSecondary,
     marginBottom: 2,
   },
   detailMargin: {
     fontSize: 14,
     fontWeight: "600",
     marginTop: 4,
+    color: theme.success,
   },
 });
 

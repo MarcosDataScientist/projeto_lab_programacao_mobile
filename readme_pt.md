@@ -76,6 +76,12 @@ projeto_final/
 
 ## 🚀 Como Utilizar o Aplicativo
 
+> **⚠️ Importante:** Este projeto requer **dois arquivos `.env` separados**:
+> - Um em `Backend/.env` - para configuração do banco de dados e servidor
+> - Um em `Frontend/.env` - para configuração da URL da API
+> 
+> Ambos os arquivos são necessários e devem ser criados manualmente. Veja as seções de configuração abaixo para mais detalhes.
+
 ### Pré-requisitos
 
 - Python 3.8+ (com Conda para gerenciamento de ambiente)
@@ -108,6 +114,8 @@ projeto_final/
    # BACKEND CONFIG
    BACKEND_PORT=5000
    ```
+   
+   > **Importante:** Este arquivo `.env` é para a configuração do Backend. Você também precisará criar outro arquivo `.env` na pasta Frontend (veja a seção de Configuração do Frontend abaixo).
 
 4. **Criar o banco de dados:**
    Execute o script `schema.sql` no PostgreSQL para criar as tabelas:
@@ -134,7 +142,10 @@ projeto_final/
    ```env
    API_BASE_URL=http://192.168.0.8:5000/api
    ```
-   > **Nota**: Substitua `192.168.0.8` pelo IP da sua máquina na rede local. Para descobrir seu IP no Windows, execute `ipconfig` no PowerShell e procure por "IPv4 Address".
+   > **Nota**: 
+   > - Substitua `192.168.0.8` pelo IP da sua máquina na rede local. Para descobrir seu IP no Windows, execute `ipconfig` no PowerShell e procure por "IPv4 Address".
+   > - A porta `5000` deve corresponder à porta `BACKEND_PORT` configurada no arquivo `.env` do Backend.
+   > - **Importante:** Este é um arquivo `.env` separado do Backend. Você precisa de **dois arquivos `.env`**: um em `Backend/` e outro em `Frontend/`.
 
 3. **Executar o aplicativo:**
    ```bash

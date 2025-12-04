@@ -76,6 +76,12 @@ projeto_final/
 
 ## 🚀 How to Use the Application
 
+> **⚠️ Important:** This project requires **two separate `.env` files**:
+> - One in `Backend/.env` - for database and server configuration
+> - One in `Frontend/.env` - for API URL configuration
+> 
+> Both files are required and must be created manually. See the setup sections below for details.
+
 ### Prerequisites
 
 - Python 3.8+ (with Conda for environment management)
@@ -108,6 +114,8 @@ projeto_final/
    # BACKEND CONFIG
    BACKEND_PORT=5000
    ```
+   
+   > **Important:** This `.env` file is for the Backend configuration. You will also need to create another `.env` file in the Frontend folder (see Frontend Setup section below).
 
 4. **Create the database:**
    Execute the `schema.sql` script in PostgreSQL to create the tables:
@@ -134,7 +142,10 @@ projeto_final/
    ```env
    API_BASE_URL=http://192.168.0.8:5000/api
    ```
-   > **Note**: Replace `192.168.0.8` with your machine's IP address on the local network. To find your IP on Windows, run `ipconfig` in PowerShell and look for "IPv4 Address".
+   > **Note**: 
+   > - Replace `192.168.0.8` with your machine's IP address on the local network. To find your IP on Windows, run `ipconfig` in PowerShell and look for "IPv4 Address".
+   > - The port `5000` must match the `BACKEND_PORT` configured in the Backend `.env` file.
+   > - **Important:** This is a separate `.env` file from the Backend one. You need **two `.env` files**: one in `Backend/` and one in `Frontend/`.
 
 3. **Run the application:**
    ```bash

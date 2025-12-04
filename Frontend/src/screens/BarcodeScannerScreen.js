@@ -7,22 +7,23 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { BarCodeScanner } from "expo-barcode-scanner";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CameraView, useCameraPermissions } from "expo-camera";
 
 export default function BarcodeScannerScreen({ route, navigation }) {
   const { onScan } = route.params || {};
-  const [hasPermission, setHasPermission] = useState(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === "granted");
-    })();
-  }, []);
+    if (permission && !permission.granted) {
+      requestPermission();
+    }
+  }, [permission]);
 
   function handleBarCodeScanned({ type, data }) {
+    if (scanned) return;
+    
     setScanned(true);
     if (onScan) {
       onScan(data);
@@ -39,18 +40,18 @@ export default function BarcodeScannerScreen({ route, navigation }) {
     }
   }
 
-  if (hasPermission === null) {
+  if (!permission) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" />
-          <Text style={styles.message}>Solicitando permissão da câmera...</Text>
+          <Text style={styles.message}>Carregando...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
@@ -60,6 +61,12 @@ export default function BarcodeScannerScreen({ route, navigation }) {
           </Text>
           <Pressable
             style={styles.button}
+            onPress={requestPermission}
+          >
+            <Text style={styles.buttonText}>Solicitar Permissão</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.button, styles.cancelButton]}
             onPress={() => navigation.goBack()}
           >
             <Text style={styles.buttonText}>Voltar</Text>
@@ -72,9 +79,25 @@ export default function BarcodeScannerScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.scannerContainer}>
-        <BarCodeScanner
-          onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+        <CameraView
           style={StyleSheet.absoluteFillObject}
+          facing="back"
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: [
+              "ean13",
+              "ean8",
+              "upc_a",
+              "upc_e",
+              "code128",
+              "code39",
+              "code93",
+              "codabar",
+              "itf14",
+              "datamatrix",
+              "qr",
+            ],
+          }}
         />
         <View style={styles.overlay}>
           <View style={styles.scanArea} />

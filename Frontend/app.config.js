@@ -1,4 +1,37 @@
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+
+// Tentar ler o .env manualmente se dotenv não funcionar
+let apiBaseUrl = "http://localhost:5000/api";
+
+const envPath = path.resolve(__dirname, '.env');
+
+// Tentar com dotenv primeiro
+require('dotenv').config({ path: envPath });
+
+// Se não funcionou, ler manualmente
+if (!process.env.API_BASE_URL) {
+  try {
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const lines = envContent.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const [key, ...valueParts] = trimmed.split('=');
+          if (key.trim() === 'API_BASE_URL') {
+            apiBaseUrl = valueParts.join('=').trim();
+            break;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // Silenciosamente usa o valor padrão
+  }
+} else {
+  apiBaseUrl = process.env.API_BASE_URL;
+}
 
 module.exports = {
   expo: {
@@ -28,7 +61,7 @@ module.exports = {
       favicon: "./assets/favicon.png"
     },
     extra: {
-      apiBaseUrl: process.env.API_BASE_URL || "http://localhost:5000/api"
+      apiBaseUrl: apiBaseUrl
     }
   }
 };

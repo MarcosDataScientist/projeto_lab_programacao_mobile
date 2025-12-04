@@ -1,8 +1,5 @@
 import axios from "axios";
-import Constants from "expo-constants";
-
-// Lê a URL da API do arquivo .env através do app.config.js
-const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl || "http://localhost:5000/api";
+import API_BASE_URL from "../config/apiConfig";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

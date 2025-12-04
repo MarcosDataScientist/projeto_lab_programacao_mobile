@@ -9,6 +9,8 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { api } from "../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -89,8 +91,18 @@ export default function ListingFormScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom", "top"]}>
-      <ScrollView style={styles.container}>
-        <StatusBar style={styles.statusBar} />
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <StatusBar style={styles.statusBar} />
         <Text style={styles.title}>
           {mode === "edit" ? "Editar Anúncio" : "Novo Anúncio"}
         </Text>
@@ -182,7 +194,8 @@ export default function ListingFormScreen({ route, navigation }) {
             {saving ? "Salvando..." : "Salvar"}
           </Text>
         </Pressable>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -192,10 +205,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F3F4F6",
   },
+  keyboardView: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 16,
     backgroundColor: "#F3F4F6",
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   statusBar: {
     barStyle: "light-content",

@@ -9,18 +9,25 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  TextInput,
+  Platform,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 import { api } from "../services/api";
 import ListingItem from "../components/ListingItem";
 
 export default function ListingScreen({ navigation }) {
+  const { theme, isDarkMode } = useTheme();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const timeoutRef = useRef(null);
+  const styles = createStyles(theme);
 
   useEffect(() => {
     return () => {
@@ -45,7 +52,10 @@ export default function ListingScreen({ navigation }) {
   async function loadListings(showLoading = true) {
     try {
       if (showLoading) setLoading(true);
-      const response = await api.get("/listings");
+      const url = searchTerm 
+        ? `/listings?search=${encodeURIComponent(searchTerm)}`
+        : "/listings";
+      const response = await api.get(url);
       setListings(response.data);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível carregar os anúncios.");
@@ -54,6 +64,14 @@ export default function ListingScreen({ navigation }) {
       setRefreshing(false);
     }
   }
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadListings();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   useFocusEffect(
     useCallback(() => {
@@ -123,21 +141,27 @@ export default function ListingScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom", "top"]}>
-      <View style={styles.container}>
-        <StatusBar style={styles.statusBar} />
-        <View style={styles.header}>
-          <Text style={styles.title}>Anúncios</Text>
-          <Pressable style={styles.addButton} onPress={handleAdd}>
-            <Text style={styles.addButtonText}>Novo</Text>
-          </Pressable>
-        </View>
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+      <View style={[styles.container, { paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }]}>
+        <StatusBar style={isDarkMode ? "light" : "dark"} translucent={true} />
 
         {successMessage ? (
           <View style={styles.successBanner}>
             <Text style={styles.successBannerText}>{successMessage}</Text>
           </View>
         ) : null}
+
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar por nome do produto..."
+            placeholderTextColor={theme.textSecondary}
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            onSubmitEditing={loadListings}
+            color={theme.text}
+          />
+        </View>
 
         {loading ? (
           <ActivityIndicator size="large" style={styles.loading} />
@@ -157,59 +181,71 @@ export default function ListingScreen({ navigation }) {
             }
           />
         )}
+        
+        <Pressable style={styles.fabButton} onPress={handleAdd}>
+          <MaterialIcons name="add" size={28} color="#FFF" />
+        </Pressable>
       </View>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
     marginBottom: 12,
   },
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: "#F3F4F6",
-  },
-  statusBar: {
-    barStyle: "light-content",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 12,
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
+    backgroundColor: theme.background,
   },
   successBanner: {
-    backgroundColor: "#D1FAE5",
+    backgroundColor: theme.success + "20",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#6EE7B7",
+    borderColor: theme.success,
   },
   successBannerText: {
-    color: "#065F46",
+    color: theme.success,
     fontSize: 14,
     fontWeight: "500",
   },
-  addButton: {
-    backgroundColor: "#2563EB",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+  searchContainer: {
+    marginBottom: 12,
   },
-  addButtonText: {
-    color: "#FFF",
-    fontWeight: "600",
+  searchInput: {
+    backgroundColor: theme.inputBackground,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: theme.inputBorder,
+    minHeight: 44,
+    color: theme.text,
+  },
+  fabButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.success,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   loading: {
     marginTop: 32,
@@ -220,7 +256,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    color: "#6B7280",
+    color: theme.textSecondary,
   },
 });
 

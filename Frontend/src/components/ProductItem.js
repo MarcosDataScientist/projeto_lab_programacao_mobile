@@ -1,6 +1,9 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 export default function ProductItem({ product, onPress, onDelete }) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   return (
     <View style={styles.itemContainer}>
       <View style={styles.itemHeader}>
@@ -37,13 +40,15 @@ export default function ProductItem({ product, onPress, onDelete }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   itemContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.surface,
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
     elevation: 1,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   itemHeader: {
     flexDirection: "row",
@@ -59,10 +64,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 4,
+    color: theme.text,
   },
   itemSku: {
     fontSize: 12,
-    color: "#6B7280",
+    color: theme.textSecondary,
   },
   buttonsContainer: {
     flexDirection: "row",
@@ -70,7 +76,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   itemDescription: {
-    color: "#4B5563",
+    color: theme.textSecondary,
     marginBottom: 8,
     fontSize: 14,
   },
@@ -80,12 +86,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   itemCost: {
-    color: "#059669",
+    color: theme.success,
     fontWeight: "500",
     fontSize: 14,
   },
   itemInventory: {
-    color: "#6B7280",
+    color: theme.textSecondary,
     fontSize: 14,
   },
   editButton: {
@@ -97,11 +103,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   editText: {
-    color: "#2563EB",
+    color: theme.primary,
     fontWeight: "500",
   },
   deleteText: {
-    color: "#DC2626",
+    color: theme.error,
     fontWeight: "500",
   },
 });

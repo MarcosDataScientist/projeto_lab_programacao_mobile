@@ -1,6 +1,9 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { MaterialIcons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 
 import ProductListScreen from "./src/screens/ProductListScreen";
 import ProductFormScreen from "./src/screens/ProductFormScreen";
@@ -8,16 +11,18 @@ import ListingScreen from "./src/screens/ListingScreen";
 import ListingFormScreen from "./src/screens/ListingFormScreen";
 import OrderCalculatorScreen from "./src/screens/OrderCalculatorScreen";
 import BarcodeScannerScreen from "./src/screens/BarcodeScannerScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function ProductsStack() {
+  const { theme } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: "#1A237E" },
-        headerTintColor: "#FFF",
+        headerStyle: { backgroundColor: theme.headerBackground },
+        headerTintColor: theme.headerText,
         headerTitleStyle: { fontWeight: "600" },
       }}
     >
@@ -41,11 +46,12 @@ function ProductsStack() {
 }
 
 function ListingsStack() {
+  const { theme } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: "#1A237E" },
-        headerTintColor: "#FFF",
+        headerStyle: { backgroundColor: theme.headerBackground },
+        headerTintColor: theme.headerText,
         headerTitleStyle: { fontWeight: "600" },
       }}
     >
@@ -64,11 +70,12 @@ function ListingsStack() {
 }
 
 function OrderCalculatorStack() {
+  const { theme } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: "#1A237E" },
-        headerTintColor: "#FFF",
+        headerStyle: { backgroundColor: theme.headerBackground },
+        headerTintColor: theme.headerText,
         headerTitleStyle: { fontWeight: "600" },
       }}
     >
@@ -81,18 +88,38 @@ function OrderCalculatorStack() {
   );
 }
 
-export default function App() {
+function SettingsStack() {
+  const { theme } = useTheme();
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: theme.headerBackground },
+        headerTintColor: theme.headerText,
+        headerTitleStyle: { fontWeight: "600" },
+      }}
+    >
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: "Configurações" }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function AppNavigator() {
+  const { theme } = useTheme();
   return (
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: "#1A237E",
-          tabBarInactiveTintColor: "#6B7280",
+          tabBarActiveTintColor: theme.primary,
+          tabBarInactiveTintColor: theme.textSecondary,
           tabBarStyle: {
-            backgroundColor: "#FFF",
+            backgroundColor: theme.tabBarBackground,
             borderTopWidth: 1,
-            borderTopColor: "#E5E7EB",
+            borderTopColor: theme.tabBarBorder,
           },
         }}
       >
@@ -101,7 +128,9 @@ export default function App() {
           component={ProductsStack}
           options={{
             title: "Produtos",
-            tabBarIcon: () => null,
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="inventory" size={size || 24} color={color} />
+            ),
           }}
         />
         <Tab.Screen
@@ -109,7 +138,9 @@ export default function App() {
           component={ListingsStack}
           options={{
             title: "Anúncios",
-            tabBarIcon: () => null,
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="store" size={size || 24} color={color} />
+            ),
           }}
         />
         <Tab.Screen
@@ -117,10 +148,40 @@ export default function App() {
           component={OrderCalculatorStack}
           options={{
             title: "Calculadora",
-            tabBarIcon: () => null,
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="calculate" size={size || 24} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="SettingsTab"
+          component={SettingsStack}
+          options={{
+            title: "Configurações",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="settings" size={size || 24} color={color} />
+            ),
           }}
         />
       </Tab.Navigator>
     </NavigationContainer>
+  );
+}
+
+function AppWithTheme() {
+  const { isDarkMode } = useTheme();
+  return (
+    <>
+      <StatusBar style={isDarkMode ? "light" : "dark"} translucent={true} />
+      <AppNavigator />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppWithTheme />
+    </ThemeProvider>
   );
 }

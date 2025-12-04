@@ -1,10 +1,19 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 export default function ListingItem({ listing, onPress, onDelete }) {
+  const { theme, isDarkMode } = useTheme();
+  const styles = createStyles(theme);
   const margin = listing.contribution_margin;
+  
+  // Cores da margem que funcionam bem em ambos os temas
   const marginColor = margin !== null && margin !== undefined 
-    ? margin >= 30 ? "#059669" : margin >= 15 ? "#D97706" : "#DC2626"
-    : "#6B7280";
+    ? margin >= 30 
+      ? "#10B981" // Verde (sucesso) - funciona bem em ambos os temas
+      : margin >= 15 
+        ? "#F59E0B" // Laranja/Amarelo - mais visível no tema escuro
+        : "#EF4444" // Vermelho (erro) - funciona bem em ambos os temas
+    : theme.textSecondary;
 
   return (
     <View style={styles.itemContainer}>
@@ -48,13 +57,15 @@ export default function ListingItem({ listing, onPress, onDelete }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   itemContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.surface,
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
     elevation: 1,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
   itemHeader: {
     flexDirection: "row",
@@ -70,10 +81,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 4,
+    color: theme.text,
   },
   itemMarketplace: {
     fontSize: 12,
-    color: "#6B7280",
+    color: theme.textSecondary,
   },
   buttonsContainer: {
     flexDirection: "row",
@@ -91,11 +103,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   priceLabel: {
-    color: "#6B7280",
+    color: theme.textSecondary,
     fontSize: 14,
   },
   priceValue: {
-    color: "#059669",
+    color: theme.success,
     fontWeight: "600",
     fontSize: 16,
   },
@@ -105,7 +117,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   marginLabel: {
-    color: "#6B7280",
+    color: theme.textSecondary,
     fontSize: 14,
   },
   marginValue: {
@@ -121,11 +133,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   editText: {
-    color: "#2563EB",
+    color: theme.primary,
     fontWeight: "500",
   },
   deleteText: {
-    color: "#DC2626",
+    color: theme.error,
     fontWeight: "500",
   },
 });

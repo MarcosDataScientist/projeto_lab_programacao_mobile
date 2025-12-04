@@ -10,19 +10,24 @@ import {
   Alert,
   RefreshControl,
   TextInput,
+  Platform,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 import { api } from "../services/api";
 import ProductItem from "../components/ProductItem";
 
 export default function ProductListScreen({ navigation }) {
+  const { theme, isDarkMode } = useTheme();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const timeoutRef = useRef(null);
+  const styles = createStyles(theme);
 
   useEffect(() => {
     return () => {
@@ -53,7 +58,21 @@ export default function ProductListScreen({ navigation }) {
       const response = await api.get(url);
       setProducts(response.data);
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar os produtos.");
+      console.error("Erro ao carregar produtos:", error);
+      let errorMessage = "Não foi possível carregar os produtos.";
+      
+      if (error.message) {
+        errorMessage += `\n\nErro: ${error.message}`;
+      }
+      
+      if (error.response) {
+        errorMessage += `\nStatus: ${error.response.status}`;
+        errorMessage += `\nMensagem: ${error.response.data?.error || error.response.data?.message || "Erro desconhecido"}`;
+      } else if (error.request) {
+        errorMessage += "\n\nVerifique se o backend está rodando e se a URL da API está correta no arquivo .env";
+      }
+      
+      Alert.alert("Erro ao Carregar Produtos", errorMessage);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -132,15 +151,9 @@ export default function ProductListScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["bottom", "top"]}>
-      <View style={styles.container}>
-        <StatusBar style={styles.statusBar} />
-        <View style={styles.header}>
-          <Text style={styles.title}>Produtos</Text>
-          <Pressable style={styles.addButton} onPress={handleAdd}>
-            <Text style={styles.addButtonText}>Novo</Text>
-          </Pressable>
-        </View>
+    <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
+      <View style={[styles.container, { paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }]}>
+        <StatusBar style={isDarkMode ? "light" : "dark"} translucent={true} />
 
         {successMessage ? (
           <View style={styles.successBanner}>
@@ -152,12 +165,14 @@ export default function ProductListScreen({ navigation }) {
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar por SKU, nome ou código de barras..."
+            placeholderTextColor={theme.textSecondary}
             value={searchTerm}
             onChangeText={setSearchTerm}
             onSubmitEditing={loadProducts}
+            color={theme.text}
           />
           <Pressable style={styles.scanButton} onPress={handleScanBarcode}>
-            <Text style={styles.scanButtonText}>📷</Text>
+            <MaterialCommunityIcons name="barcode-scan" size={24} color="#FFF" />
           </Pressable>
         </View>
 
@@ -179,59 +194,58 @@ export default function ProductListScreen({ navigation }) {
             }
           />
         )}
+        
+        <Pressable style={styles.fabButton} onPress={handleAdd}>
+          <MaterialIcons name="add" size={28} color="#FFF" />
+        </Pressable>
       </View>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
     marginBottom: 12,
   },
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: "#F3F4F6",
-  },
-  statusBar: {
-    barStyle: "light-content",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 12,
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
+    backgroundColor: theme.background,
   },
   successBanner: {
-    backgroundColor: "#D1FAE5",
+    backgroundColor: theme.success + "20",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#6EE7B7",
+    borderColor: theme.success,
   },
   successBannerText: {
-    color: "#065F46",
+    color: theme.success,
     fontSize: 14,
     fontWeight: "500",
   },
-  addButton: {
-    backgroundColor: "#2563EB",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addButtonText: {
-    color: "#FFF",
-    fontWeight: "600",
+  fabButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.success,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   searchContainer: {
     flexDirection: "row",
@@ -240,23 +254,22 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    backgroundColor: "#FFF",
+    backgroundColor: theme.inputBackground,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.inputBorder,
+    minHeight: 44,
+    color: theme.text,
   },
   scanButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: theme.primary,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-  },
-  scanButtonText: {
-    fontSize: 20,
   },
   loading: {
     marginTop: 32,
@@ -267,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    color: "#6B7280",
+    color: theme.textSecondary,
   },
 });
 

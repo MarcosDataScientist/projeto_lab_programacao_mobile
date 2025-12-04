@@ -7,10 +7,13 @@ listing_bp = Blueprint('listings', __name__)
 @listing_bp.route('', methods=['GET'])
 def get_listings():
     try:
+        search_term = request.args.get('search')
         product_id = request.args.get('product_id')
         marketplace = request.args.get('marketplace')
         
-        if product_id:
+        if search_term:
+            listings = ListingService.search(search_term)
+        elif product_id:
             listings = ListingService.get_by_product_id(int(product_id))
         elif marketplace:
             listings = ListingService.get_by_marketplace(marketplace)

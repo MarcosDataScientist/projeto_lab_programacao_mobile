@@ -1,6 +1,7 @@
 from model.listing import Listing
 from model.product import Product
 from config.database import db
+from sqlalchemy import or_
 
 class ListingService:
     @staticmethod
@@ -18,6 +19,17 @@ class ListingService:
     @staticmethod
     def get_by_marketplace(marketplace):
         return Listing.query.filter_by(marketplace=marketplace).all()
+    
+    @staticmethod
+    def search(search_term):
+        """Busca anúncios pelo nome do produto"""
+        if not search_term:
+            return Listing.query.all()
+        
+        search_pattern = f"%{search_term}%"
+        return Listing.query.join(Product).filter(
+            Product.name.ilike(search_pattern)
+        ).all()
     
     @staticmethod
     def create(data):
