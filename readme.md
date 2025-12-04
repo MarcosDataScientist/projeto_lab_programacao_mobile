@@ -1,233 +1,233 @@
-# Aplicativo de Gerenciamento de Produtos e Anúncios
+# Product and Listing Management Application
 
-Aplicativo mobile desenvolvido para conclusão do curso de laboratório de programação. O sistema permite gerenciar produtos, anúncios em marketplaces e calcular margens de contribuição.
+Mobile application developed for the completion of the programming laboratory course. The system allows managing products, marketplace listings, and calculating contribution margins.
 
-## 📋 Objetivo do Aplicativo
+## 📋 Application Objectives
 
-O aplicativo oferece as seguintes funcionalidades:
+The application offers the following features:
 
-- **Cadastro de Produtos**: Persistência de produtos com informações como SKU, nome, descrição, custo e estoque
-- **Busca Inteligente**: Pesquisa de produtos por SKU, nome ou código de barras (com suporte a leitura via câmera)
-- **Calculadora de Margem de Contribuição**: Cálculo de margem de contribuição baseado no custo cadastrado do produto
-- **Gerenciamento de Anúncios**: Registro de anúncios por marketplace com exibição das respectivas margens de contribuição
-- **Calculadora de Margem de Pedido**: Cálculo da margem de contribuição de pedidos completos com múltiplos produtos e quantidades
+- **Product Registration**: Product persistence with information such as SKU, name, description, cost, and inventory
+- **Smart Search**: Product search by SKU, name, or barcode (with camera reading support)
+- **Contribution Margin Calculator**: Calculation of contribution margin based on the registered product cost
+- **Listing Management**: Registration of listings by marketplace with display of respective contribution margins
+- **Order Margin Calculator**: Calculation of contribution margin for complete orders with multiple products and quantities
 
-## 🛠 Tecnologias Utilizadas
+## 🛠 Technologies Used
 
-### Banco de Dados
-- **PostgreSQL**: Banco de dados relacional para persistência dos dados
+### Database
+- **PostgreSQL**: Relational database for data persistence
 
 ### Back-end
-- **Flask**: Framework web Python para criação da API REST
-- **SQLAlchemy**: ORM (Object-Relational Mapping) para orquestração das requisições ao banco de dados
-- **Flask-CORS**: Middleware para habilitar CORS (Cross-Origin Resource Sharing)
-- **python-dotenv**: Gerenciamento de variáveis de ambiente
+- **Flask**: Python web framework for REST API creation
+- **SQLAlchemy**: ORM (Object-Relational Mapping) for orchestrating database requests
+- **Flask-CORS**: Middleware to enable CORS (Cross-Origin Resource Sharing)
+- **python-dotenv**: Environment variable management
 
 ### Front-end
-- **React Native**: Framework para construção de aplicativos mobile multiplataforma
-- **Expo CLI**: Ferramenta para desenvolvimento e emulação mobile
-- **React Navigation**: Biblioteca para navegação entre telas
-- **Expo Barcode Scanner**: Módulo para leitura de códigos de barras via câmera
-- **Axios**: Cliente HTTP para comunicação com a API
+- **React Native**: Framework for building cross-platform mobile applications
+- **Expo CLI**: Tool for mobile development and emulation
+- **React Navigation**: Library for navigation between screens
+- **Expo Barcode Scanner**: Module for barcode reading via camera
+- **Axios**: HTTP client for API communication
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
 projeto_final/
 ├── Backend/
-│   ├── app.py                 # Aplicação principal Flask
-│   ├── requirements.txt       # Dependências Python
+│   ├── app.py                 # Main Flask application
+│   ├── requirements.txt       # Python dependencies
 │   ├── config/
-│   │   ├── config.py          # Configurações da aplicação
-│   │   └── database.py        # Configuração do banco de dados
-│   ├── model/                 # Modelos SQLAlchemy
+│   │   ├── config.py          # Application configuration
+│   │   └── database.py        # Database configuration
+│   ├── model/                 # SQLAlchemy models
 │   │   ├── product.py
 │   │   ├── listing.py
 │   │   └── product_annotation.py
-│   ├── controller/            # Controladores (Blueprints)
+│   ├── controller/            # Controllers (Blueprints)
 │   │   ├── product_controller.py
 │   │   ├── listing_controller.py
 │   │   └── order_calculator_controller.py
-│   ├── service/               # Lógica de negócio
+│   ├── service/               # Business logic
 │   │   ├── product_service.py
 │   │   └── listing_service.py
-│   └── exception/             # Tratamento de exceções
+│   └── exception/             # Exception handling
 │       └── exception_handler.py
 ├── Frontend/
-│   ├── App.js                 # Componente principal
-│   ├── package.json           # Dependências Node.js
+│   ├── App.js                 # Main component
+│   ├── package.json           # Node.js dependencies
 │   ├── src/
-│   │   ├── screens/           # Telas do aplicativo
+│   │   ├── screens/           # Application screens
 │   │   │   ├── ProductListScreen.js
 │   │   │   ├── ProductFormScreen.js
 │   │   │   ├── ListingScreen.js
 │   │   │   ├── ListingFormScreen.js
 │   │   │   ├── OrderCalculatorScreen.js
 │   │   │   └── BarcodeScannerScreen.js
-│   │   ├── components/        # Componentes reutilizáveis
+│   │   ├── components/        # Reusable components
 │   │   │   ├── ProductItem.js
 │   │   │   └── ListingItem.js
 │   │   └── services/
-│   │       └── api.js          # Configuração do cliente HTTP
+│   │       └── api.js          # HTTP client configuration
 └── Database/
-    ├── schema.sql              # Script de criação do banco de dados
-    └── modelagem.drawio        # Diagrama de modelagem
+    ├── schema.sql              # Database creation script
+    └── modelagem.drawio        # Modeling diagram
 ```
 
-## 🚀 Como Utilizar o Aplicativo
+## 🚀 How to Use the Application
 
-### Pré-requisitos
+### Prerequisites
 
-- Python 3.8+ (com Conda para gerenciamento de ambiente)
-- Node.js 16+ e npm
-- PostgreSQL instalado e rodando
-- Expo CLI instalado globalmente (`npm install -g expo-cli`)
+- Python 3.8+ (with Conda for environment management)
+- Node.js 16+ and npm
+- PostgreSQL installed and running
+- Expo CLI installed globally (`npm install -g expo-cli`)
 
-### Configuração do Backend
+### Backend Setup
 
-1. **Criar ambiente virtual com Conda:**
+1. **Create virtual environment with Conda:**
    ```bash
    conda create -n projeto_final_japa python=3.13
    conda activate projeto_final_japa
    ```
 
-2. **Instalar dependências:**
+2. **Install dependencies:**
    ```bash
    cd Backend
    pip install -r requirements.txt
    ```
 
-3. **Configurar variáveis de ambiente:**
-   Crie um arquivo `.env` na pasta `Backend/` com o seguinte conteúdo:
+3. **Configure environment variables:**
+   Create a `.env` file in the `Backend/` folder with the following content:
    ```env
    # DATABASE CONFIG
-   DATA_BASE_URL=localhost:5432/nome_do_banco
-   DATA_BASE_USER=seu_usuario
-   DATA_BASE_PASSWORD=sua_senha
+   DATA_BASE_URL=localhost:5432/database_name
+   DATA_BASE_USER=your_user
+   DATA_BASE_PASSWORD=your_password
 
    # BACKEND CONFIG
    BACKEND_PORT=5000
    ```
 
-4. **Criar o banco de dados:**
-   Execute o script `schema.sql` no PostgreSQL para criar as tabelas:
+4. **Create the database:**
+   Execute the `schema.sql` script in PostgreSQL to create the tables:
    ```bash
-   psql -U seu_usuario -d nome_do_banco -f ../Database/schema.sql
+   psql -U your_user -d database_name -f ../Database/schema.sql
    ```
 
-5. **Executar o servidor:**
+5. **Run the server:**
    ```bash
    python app.py
    ```
-   O servidor estará disponível em `http://localhost:5000`
+   The server will be available at `http://localhost:5000`
 
-### Configuração do Frontend
+### Frontend Setup
 
-1. **Instalar dependências:**
+1. **Install dependencies:**
    ```bash
    cd Frontend
    npm install
    ```
 
-2. **Configurar URL da API:**
-   Edite o arquivo `Frontend/src/services/api.js` e ajuste a constante `API_BASE_URL` com o IP da sua máquina na rede local:
-   ```javascript
-   const API_BASE_URL = "http://SEU_IP_LOCAL:5000/api";
+2. **Configure API URL:**
+   Create a `.env` file in the `Frontend/` folder with the following content:
+   ```env
+   API_BASE_URL=http://192.168.0.8:5000/api
    ```
-   > **Nota**: Para descobrir seu IP local no Windows, execute `ipconfig` no PowerShell e procure por "IPv4 Address".
+   > **Note**: Replace `192.168.0.8` with your machine's IP address on the local network. To find your IP on Windows, run `ipconfig` in PowerShell and look for "IPv4 Address".
 
-3. **Executar o aplicativo:**
+3. **Run the application:**
    ```bash
    npm start
    ```
-   Em seguida, escolha uma das opções:
-   - Pressione `a` para abrir no Android Emulator
-   - Pressione `i` para abrir no iOS Simulator
-   - Escaneie o QR code com o app Expo Go no seu dispositivo físico
+   Then, choose one of the options:
+   - Press `a` to open in Android Emulator
+   - Press `i` to open in iOS Simulator
+   - Scan the QR code with the Expo Go app on your physical device
 
-## 📱 Funcionalidades do Aplicativo
+## 📱 Application Features
 
-### 1. Gerenciamento de Produtos
-- Listar todos os produtos cadastrados
-- Buscar produtos por SKU, nome ou código de barras
-- Cadastrar novos produtos
-- Editar produtos existentes
-- Excluir produtos
-- Calcular margem de contribuição no cadastro
+### 1. Product Management
+- List all registered products
+- Search products by SKU, name, or barcode
+- Register new products
+- Edit existing products
+- Delete products
+- Calculate contribution margin in the registration form
 
-### 2. Scanner de Código de Barras
-- Acessar a câmera do dispositivo
-- Escanear códigos de barras
-- Usar o código escaneado para buscar produtos
+### 2. Barcode Scanner
+- Access device camera
+- Scan barcodes
+- Use scanned code to search for products
 
-### 3. Gerenciamento de Anúncios
-- Listar todos os anúncios cadastrados
-- Cadastrar novos anúncios vinculados a produtos
-- Editar anúncios existentes
-- Excluir anúncios
-- Visualizar margem de contribuição de cada anúncio
+### 3. Listing Management
+- List all registered listings
+- Register new listings linked to products
+- Edit existing listings
+- Delete listings
+- View contribution margin for each listing
 
-### 4. Calculadora de Margem de Pedido
-- Adicionar múltiplos produtos ao pedido
-- Definir quantidades e preços unitários
-- Calcular margem de contribuição total do pedido
-- Visualizar detalhamento por item e resumo geral
+### 4. Order Margin Calculator
+- Add multiple products to the order
+- Define quantities and unit prices
+- Calculate total order contribution margin
+- View item details and general summary
 
 ## 🔧 API Endpoints
 
-### Produtos
-- `GET /api/products` - Listar todos os produtos
-- `GET /api/products?search={termo}` - Buscar produtos
-- `GET /api/products/{id}` - Obter produto por ID
-- `POST /api/products` - Criar produto
-- `PUT /api/products/{id}` - Atualizar produto
-- `DELETE /api/products/{id}` - Excluir produto
-- `POST /api/products/{id}/contribution-margin` - Calcular margem de contribuição
+### Products
+- `GET /api/products` - List all products
+- `GET /api/products?search={term}` - Search products
+- `GET /api/products/{id}` - Get product by ID
+- `POST /api/products` - Create product
+- `PUT /api/products/{id}` - Update product
+- `DELETE /api/products/{id}` - Delete product
+- `POST /api/products/{id}/contribution-margin` - Calculate contribution margin
 
-### Anúncios
-- `GET /api/listings` - Listar todos os anúncios
-- `GET /api/listings?product_id={id}` - Listar anúncios por produto
-- `GET /api/listings?marketplace={nome}` - Listar anúncios por marketplace
-- `GET /api/listings/{id}` - Obter anúncio por ID
-- `POST /api/listings` - Criar anúncio
-- `PUT /api/listings/{id}` - Atualizar anúncio
-- `DELETE /api/listings/{id}` - Excluir anúncio
+### Listings
+- `GET /api/listings` - List all listings
+- `GET /api/listings?product_id={id}` - List listings by product
+- `GET /api/listings?marketplace={name}` - List listings by marketplace
+- `GET /api/listings/{id}` - Get listing by ID
+- `POST /api/listings` - Create listing
+- `PUT /api/listings/{id}` - Update listing
+- `DELETE /api/listings/{id}` - Delete listing
 
-### Calculadora de Pedido
-- `POST /api/order-calculator/calculate` - Calcular margem de pedido
+### Order Calculator
+- `POST /api/order-calculator/calculate` - Calculate order margin
 
-## 📊 Modelo de Dados
+## 📊 Data Model
 
-O banco de dados possui três tabelas principais:
+The database has three main tables:
 
-1. **product**: Armazena informações dos produtos
-2. **listing**: Armazena anúncios vinculados a produtos (relacionamento 1:N)
-3. **product_annotation**: Armazena anotações sobre produtos (entidade fraca)
+1. **product**: Stores product information
+2. **listing**: Stores listings linked to products (1:N relationship)
+3. **product_annotation**: Stores product annotations (weak entity)
 
-## 🐛 Solução de Problemas
+## 🐛 Troubleshooting
 
-### Backend não conecta ao banco de dados
-- Verifique se o PostgreSQL está rodando
-- Confirme as credenciais no arquivo `.env`
-- Verifique se o banco de dados foi criado
+### Backend cannot connect to database
+- Check if PostgreSQL is running
+- Verify credentials in the `.env` file
+- Verify that the database was created
 
-### Frontend não consegue se conectar à API
-- Verifique se o backend está rodando
-- Confirme o IP configurado em `api.js`
-- Certifique-se de que o dispositivo/emulador está na mesma rede
+### Frontend cannot connect to API
+- Check if the backend is running
+- Verify the IP configured in the Frontend `.env` file
+- Make sure the device/emulator is on the same network
 
-### Erro ao escanear código de barras
-- Verifique se as permissões da câmera foram concedidas
-- No emulador, pode ser necessário configurar uma câmera virtual
+### Error scanning barcode
+- Check if camera permissions were granted
+- On emulator, you may need to configure a virtual camera
 
-## 📝 Notas de Desenvolvimento
+## 📝 Development Notes
 
-Este projeto foi desenvolvido utilizando os conceitos e exemplos fornecidos nas aulas do curso de laboratório de programação, incluindo:
-- Conceitos básicos de React Native
-- Navegação em React Native
-- Hooks e integração com back-end
-- APIs multi-plataforma
+This project was developed using concepts and examples provided in the programming laboratory course classes, including:
+- React Native basics
+- React Native navigation
+- Hooks and back-end integration
+- Multi-platform APIs
 
-## 👨‍💻 Autor
+## 👨‍💻 Author
 
-Desenvolvido como trabalho final do curso de laboratório de programação.
+Developed as the final project for the programming laboratory course.
