@@ -19,10 +19,12 @@ def create_app():
     from controller.product_controller import product_bp
     from controller.listing_controller import listing_bp
     from controller.order_calculator_controller import order_calculator_bp
+    from controller.configuracao_controller import configuracao_bp
     
     app.register_blueprint(product_bp, url_prefix='/api/products')
     app.register_blueprint(listing_bp, url_prefix='/api/listings')
     app.register_blueprint(order_calculator_bp, url_prefix='/api/order-calculator')
+    app.register_blueprint(configuracao_bp, url_prefix='/api/configuracao')
     
     with app.app_context():
         db.create_all()

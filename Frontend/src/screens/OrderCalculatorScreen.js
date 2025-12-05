@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { api } from "../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Picker } from "@react-native-picker/picker";
 import { useTheme } from "../context/ThemeContext";
 
 export default function OrderCalculatorScreen({ navigation }) {
@@ -28,21 +27,55 @@ export default function OrderCalculatorScreen({ navigation }) {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [result, setResult] = useState(null);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [showProductList, setShowProductList] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const styles = createStyles(theme);
 
   useEffect(() => {
     loadProducts();
+    if (Platform.OS === "android") {
+      StatusBar.setHidden(true, "fade");
+    }
   }, []);
 
   async function loadProducts() {
     try {
       setLoadingProducts(true);
-      const response = await api.get("/products");
-      setProducts(response.data);
+      const response = await api.get("/products?page=1&per_page=1000");
+      // A API agora retorna { items, pagination }
+      const productsData = response.data.items || response.data;
+      setProducts(Array.isArray(productsData) ? productsData : []);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível carregar os produtos.");
     } finally {
       setLoadingProducts(false);
+    }
+  }
+
+  // Filtrar produtos baseado no termo de busca
+  const filteredProducts = products.filter((product) => {
+    if (!productSearchTerm) return true;
+    const searchLower = productSearchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(searchLower) ||
+      product.sku.toLowerCase().includes(searchLower)
+    );
+  });
+
+  function handleProductSelect(product) {
+    setSelectedProduct(product);
+    setSelectedProductId(String(product.product_id));
+    setProductSearchTerm(`${product.name} (SKU: ${product.sku})`);
+    setShowProductList(false);
+  }
+
+  function handleProductSearchChange(text) {
+    setProductSearchTerm(text);
+    setShowProductList(true);
+    if (!text) {
+      setSelectedProduct(null);
+      setSelectedProductId("");
     }
   }
 
@@ -67,6 +100,8 @@ export default function OrderCalculatorScreen({ navigation }) {
 
     setOrderItems([...orderItems, newItem]);
     setSelectedProductId("");
+    setProductSearchTerm("");
+    setSelectedProduct(null);
     setQuantity("1");
     setPrice("");
     setResult(null);
@@ -110,6 +145,8 @@ export default function OrderCalculatorScreen({ navigation }) {
     setOrderItems([]);
     setResult(null);
     setSelectedProductId("");
+    setProductSearchTerm("");
+    setSelectedProduct(null);
     setQuantity("1");
     setPrice("");
   }
@@ -142,13 +179,12 @@ export default function OrderCalculatorScreen({ navigation }) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
-          style={[styles.container, { paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }]}
+          style={styles.container}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={() => setShowProductList(false)}
         >
-          <StatusBar style={isDarkMode ? "light" : "dark"} translucent={true} />
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Adicionar Item</Text>
 
@@ -156,21 +192,42 @@ export default function OrderCalculatorScreen({ navigation }) {
           {loadingProducts ? (
             <ActivityIndicator style={styles.loading} />
           ) : (
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedProductId}
-                onValueChange={(itemValue) => setSelectedProductId(itemValue)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Selecione um produto" value="" />
-                {products.map((product) => (
-                  <Picker.Item
-                    key={product.product_id}
-                    label={`${product.name} (SKU: ${product.sku})`}
-                    value={String(product.product_id)}
-                  />
-                ))}
-              </Picker>
+            <View style={styles.productSearchContainer}>
+              <TextInput
+                style={styles.input}
+                value={productSearchTerm}
+                onChangeText={handleProductSearchChange}
+                onFocus={() => setShowProductList(true)}
+                placeholder="Buscar produto por nome ou SKU..."
+                placeholderTextColor={theme.textSecondary}
+                color={theme.text}
+              />
+              {showProductList && productSearchTerm && filteredProducts.length > 0 && (
+                <View style={styles.productListContainer}>
+                  {filteredProducts.slice(0, 5).map((product) => (
+                    <Pressable
+                      key={product.product_id}
+                      style={styles.productItem}
+                      onPress={() => handleProductSelect(product)}
+                    >
+                      <Text style={styles.productItemName}>{product.name}</Text>
+                      <Text style={styles.productItemSku}>SKU: {product.sku}</Text>
+                    </Pressable>
+                  ))}
+                  {filteredProducts.length > 5 && (
+                    <Text style={styles.productListMore}>
+                      +{filteredProducts.length - 5} mais produtos
+                    </Text>
+                  )}
+                </View>
+              )}
+              {showProductList && productSearchTerm && filteredProducts.length === 0 && (
+                <View style={styles.productListContainer}>
+                  <Text style={styles.productListEmpty}>
+                    Nenhum produto encontrado
+                  </Text>
+                </View>
+              )}
             </View>
           )}
 
@@ -370,16 +427,55 @@ const createStyles = (theme) => StyleSheet.create({
     borderColor: theme.inputBorder,
     color: theme.text,
   },
-  pickerContainer: {
-    backgroundColor: theme.inputBackground,
+  productSearchContainer: {
+    position: 'relative',
+    zIndex: 1,
+  },
+  productListContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: 4,
+    backgroundColor: theme.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: theme.inputBorder,
+    borderColor: theme.border,
+    maxHeight: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1000,
+  },
+  productItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  productItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.text,
     marginBottom: 4,
   },
-  picker: {
-    height: 50,
-    color: theme.text,
+  productItemSku: {
+    fontSize: 12,
+    color: theme.textSecondary,
+  },
+  productListMore: {
+    padding: 12,
+    fontSize: 12,
+    color: theme.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  productListEmpty: {
+    padding: 12,
+    fontSize: 14,
+    color: theme.textSecondary,
+    textAlign: 'center',
   },
   loading: {
     marginVertical: 16,

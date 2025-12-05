@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { api } from "../services/api";
 
 const ThemeContext = createContext();
 
@@ -46,17 +47,45 @@ export const darkTheme = {
 
 export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isLoadingTheme, setIsLoadingTheme] = useState(true);
+
+  // Buscar o tema do banco de dados na inicialização
+  useEffect(() => {
+    loadThemeFromDatabase();
+  }, []);
+
+  async function loadThemeFromDatabase() {
+    try {
+      const response = await api.get('/configuracao');
+      const data = response.data;
+      // Se o tema no banco for 'dark', ativar o dark mode
+      const shouldBeDark = data.theme === 'dark';
+      setIsDarkMode(shouldBeDark);
+    } catch (error) {
+      // Em caso de erro, manter o tema padrão (light)
+      console.error("Erro ao carregar tema do banco:", error);
+      setIsDarkMode(false);
+    } finally {
+      setIsLoadingTheme(false);
+    }
+  }
 
   const toggleTheme = () => {
     setIsDarkMode((prev) => !prev);
   };
 
+  const setTheme = (dark) => {
+    setIsDarkMode(dark);
+  };
+
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDarkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, isDarkMode, toggleTheme, setTheme, isLoadingTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 };
+
+
 

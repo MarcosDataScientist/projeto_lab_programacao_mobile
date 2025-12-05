@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   View,
   StatusBar,
@@ -15,9 +15,12 @@ import {
 import { api } from "../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Picker } from "@react-native-picker/picker";
+import { useTheme } from "../context/ThemeContext";
 
 export default function ListingFormScreen({ route, navigation }) {
   const { mode, listing, onSuccess } = route.params || {};
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [marketplaceItemId, setMarketplaceItemId] = useState(
     listing?.marketplace_item_id || ""
@@ -35,20 +38,66 @@ export default function ListingFormScreen({ route, navigation }) {
   const [errors, setErrors] = useState({});
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [showProductList, setShowProductList] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     loadProducts();
+    if (Platform.OS === "android") {
+      StatusBar.setHidden(true, "fade");
+    }
   }, []);
+
+  // Definir produto selecionado quando carregar produtos ou quando listing mudar
+  useEffect(() => {
+    if (listing?.product_id && products.length > 0) {
+      const product = products.find(p => p.product_id === listing.product_id);
+      if (product) {
+        setSelectedProduct(product);
+        setProductSearchTerm(`${product.name} (SKU: ${product.sku})`);
+      }
+    }
+  }, [products, listing?.product_id]);
 
   async function loadProducts() {
     try {
       setLoadingProducts(true);
-      const response = await api.get("/products");
-      setProducts(response.data);
+      const response = await api.get("/products?page=1&per_page=1000");
+      // A API agora retorna { items, pagination }
+      const productsData = response.data.items || response.data;
+      setProducts(Array.isArray(productsData) ? productsData : []);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível carregar os produtos.");
     } finally {
       setLoadingProducts(false);
+    }
+  }
+
+  // Filtrar produtos baseado no termo de busca
+  const filteredProducts = products.filter((product) => {
+    if (!productSearchTerm) return true;
+    const searchLower = productSearchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(searchLower) ||
+      product.sku.toLowerCase().includes(searchLower)
+    );
+  });
+
+  function handleProductSelect(product) {
+    setSelectedProduct(product);
+    setProductId(String(product.product_id));
+    setProductSearchTerm(`${product.name} (SKU: ${product.sku})`);
+    setShowProductList(false);
+    setErrors((prev) => ({ ...prev, product_id: null }));
+  }
+
+  function handleProductSearchChange(text) {
+    setProductSearchTerm(text);
+    setShowProductList(true);
+    if (!text) {
+      setSelectedProduct(null);
+      setProductId("");
     }
   }
 
@@ -75,7 +124,10 @@ export default function ListingFormScreen({ route, navigation }) {
         onSuccess?.("Anúncio cadastrado com sucesso!");
       }
 
-      navigation.goBack();
+      // Pequeno delay para garantir que a mensagem de sucesso seja exibida
+      setTimeout(() => {
+        navigation.goBack();
+      }, 100);
     } catch (error) {
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
@@ -101,8 +153,10 @@ export default function ListingFormScreen({ route, navigation }) {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
+          bounces={false}
+          onScrollBeginDrag={() => setShowProductList(false)}
         >
-          <StatusBar style={styles.statusBar} />
         <Text style={styles.title}>
           {mode === "edit" ? "Editar Anúncio" : "Novo Anúncio"}
         </Text>
@@ -121,8 +175,10 @@ export default function ListingFormScreen({ route, navigation }) {
             setErrors((prev) => ({ ...prev, marketplace_item_id: null }));
           }}
           placeholder="Ex: MLB123456789"
+          placeholderTextColor={theme.textSecondary}
           maxLength={100}
           editable={mode !== "edit"}
+          color={theme.text}
         />
         {errors.marketplace_item_id && (
           <Text style={styles.errorText}>{errors.marketplace_item_id}</Text>
@@ -151,21 +207,42 @@ export default function ListingFormScreen({ route, navigation }) {
         {loadingProducts ? (
           <ActivityIndicator style={styles.loading} />
         ) : (
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={productId}
-              onValueChange={(itemValue) => setProductId(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Selecione um produto" value="" />
-              {products.map((product) => (
-                <Picker.Item
-                  key={product.product_id}
-                  label={`${product.name} (SKU: ${product.sku})`}
-                  value={String(product.product_id)}
-                />
-              ))}
-            </Picker>
+          <View style={styles.productSearchContainer}>
+            <TextInput
+              style={styles.input}
+              value={productSearchTerm}
+              onChangeText={handleProductSearchChange}
+              onFocus={() => setShowProductList(true)}
+              placeholder="Buscar produto por nome ou SKU..."
+              placeholderTextColor={theme.textSecondary}
+              color={theme.text}
+            />
+            {showProductList && productSearchTerm && filteredProducts.length > 0 && (
+              <View style={styles.productListContainer}>
+                {filteredProducts.slice(0, 5).map((product) => (
+                  <Pressable
+                    key={product.product_id}
+                    style={styles.productItem}
+                    onPress={() => handleProductSelect(product)}
+                  >
+                    <Text style={styles.productItemName}>{product.name}</Text>
+                    <Text style={styles.productItemSku}>SKU: {product.sku}</Text>
+                  </Pressable>
+                ))}
+                {filteredProducts.length > 5 && (
+                  <Text style={styles.productListMore}>
+                    +{filteredProducts.length - 5} mais produtos
+                  </Text>
+                )}
+              </View>
+            )}
+            {showProductList && productSearchTerm && filteredProducts.length === 0 && (
+              <View style={styles.productListContainer}>
+                <Text style={styles.productListEmpty}>
+                  Nenhum produto encontrado
+                </Text>
+              </View>
+            )}
           </View>
         )}
         {errors.product_id && (
@@ -181,7 +258,9 @@ export default function ListingFormScreen({ route, navigation }) {
             setErrors((prev) => ({ ...prev, price: null }));
           }}
           placeholder="0.00"
+          placeholderTextColor={theme.textSecondary}
           keyboardType="decimal-pad"
+          color={theme.text}
         />
         {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
 
@@ -200,10 +279,10 @@ export default function ListingFormScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
   },
   keyboardView: {
     flex: 1,
@@ -211,35 +290,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
   },
   scrollContent: {
     paddingBottom: 20,
-  },
-  statusBar: {
-    barStyle: "light-content",
   },
   title: {
     fontSize: 24,
     fontWeight: "700",
     marginTop: 12,
+    color: theme.text,
   },
   errorBanner: {
-    backgroundColor: "#FEE2E2",
+    backgroundColor: theme.error + "20",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
+    borderColor: theme.error,
   },
   errorBannerText: {
-    color: "#B91C1C",
+    color: theme.error,
     fontSize: 14,
     fontWeight: "500",
   },
   errorText: {
-    color: "#B91C1C",
+    color: theme.error,
     fontSize: 12,
     marginTop: 4,
   },
@@ -248,24 +325,77 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 12,
     marginBottom: 4,
+    color: theme.text,
   },
   input: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.inputBackground,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.inputBorder,
+    color: theme.text,
   },
   pickerContainer: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.inputBackground,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.inputBorder,
     marginBottom: 4,
   },
   picker: {
     height: 50,
+    color: theme.text,
+  },
+  productSearchContainer: {
+    position: 'relative',
+    zIndex: 1,
+  },
+  productListContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: 4,
+    backgroundColor: theme.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
+    maxHeight: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1000,
+  },
+  productItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  productItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.text,
+    marginBottom: 4,
+  },
+  productItemSku: {
+    fontSize: 12,
+    color: theme.textSecondary,
+  },
+  productListMore: {
+    padding: 12,
+    fontSize: 12,
+    color: theme.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  productListEmpty: {
+    padding: 12,
+    fontSize: 14,
+    color: theme.textSecondary,
+    textAlign: 'center',
   },
   loading: {
     marginVertical: 16,
@@ -273,7 +403,7 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 24,
     marginBottom: 24,
-    backgroundColor: "#2563EB",
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",

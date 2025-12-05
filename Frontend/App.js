@@ -3,6 +3,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialIcons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
+import { Platform, StatusBar as RNStatusBar } from "react-native";
+import * as NavigationBar from "expo-navigation-bar";
+import { useEffect } from "react";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 
 import ProductListScreen from "./src/screens/ProductListScreen";
@@ -24,17 +27,35 @@ function ProductsStack() {
         headerStyle: { backgroundColor: theme.headerBackground },
         headerTintColor: theme.headerText,
         headerTitleStyle: { fontWeight: "600" },
+        animation: 'slide_from_right',
+        animationDuration: 300,
+        animationTypeForReplace: 'push',
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
+        freezeOnBlur: false,
+        fullScreenGestureEnabled: true,
+        presentation: 'card',
+        contentStyle: { backgroundColor: theme.background },
       }}
     >
       <Stack.Screen
         name="ProductList"
         component={ProductListScreen}
-        options={{ title: "Produtos" }}
+        options={{ 
+          title: "Produtos",
+        }}
       />
       <Stack.Screen
         name="ProductForm"
         component={ProductFormScreen}
-        options={{ title: "Produto" }}
+        options={({ route }) => ({ 
+          title: "Produto",
+          animation: 'slide_from_right',
+          animationDuration: 300,
+          contentStyle: { backgroundColor: theme.background },
+          headerStyle: { backgroundColor: theme.headerBackground },
+          headerTintColor: theme.headerText,
+        })}
       />
       <Stack.Screen
         name="BarcodeScanner"
@@ -53,17 +74,35 @@ function ListingsStack() {
         headerStyle: { backgroundColor: theme.headerBackground },
         headerTintColor: theme.headerText,
         headerTitleStyle: { fontWeight: "600" },
+        animation: 'slide_from_right',
+        animationDuration: 300,
+        animationTypeForReplace: 'push',
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
+        freezeOnBlur: false,
+        fullScreenGestureEnabled: true,
+        presentation: 'card',
+        contentStyle: { backgroundColor: theme.background },
       }}
     >
       <Stack.Screen
         name="ListingList"
         component={ListingScreen}
-        options={{ title: "Anúncios" }}
+        options={{ 
+          title: "Anúncios",
+        }}
       />
       <Stack.Screen
         name="ListingForm"
         component={ListingFormScreen}
-        options={{ title: "Anúncio" }}
+        options={({ route }) => ({ 
+          title: "Anúncio",
+          animation: 'slide_from_right',
+          animationDuration: 300,
+          contentStyle: { backgroundColor: theme.background },
+          headerStyle: { backgroundColor: theme.headerBackground },
+          headerTintColor: theme.headerText,
+        })}
       />
     </Stack.Navigator>
   );
@@ -110,7 +149,19 @@ function SettingsStack() {
 function AppNavigator() {
   const { theme } = useTheme();
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      theme={{
+        dark: false,
+        colors: {
+          primary: theme.primary,
+          background: theme.background,
+          card: theme.background,
+          text: theme.text,
+          border: theme.border,
+          notification: theme.error,
+        },
+      }}
+    >
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -170,9 +221,22 @@ function AppNavigator() {
 
 function AppWithTheme() {
   const { isDarkMode } = useTheme();
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      // Esconder a barra de status
+      RNStatusBar.setHidden(true, "fade");
+      // Configurar barra de navegação para ficar transparente e escondida
+      NavigationBar.setBackgroundColorAsync("#00000000");
+      NavigationBar.setButtonStyleAsync(isDarkMode ? "light" : "dark");
+      // Esconder a barra de navegação (modo imersivo)
+      NavigationBar.setVisibilityAsync("hidden");
+    }
+  }, [isDarkMode]);
+
   return (
     <>
-      <StatusBar style={isDarkMode ? "light" : "dark"} translucent={true} />
+      <StatusBar hidden={true} />
       <AppNavigator />
     </>
   );

@@ -24,8 +24,14 @@ export default function ProductListScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filterEstoque, setFilterEstoque] = useState("todos");
+  const [allProducts, setAllProducts] = useState([]);
   const timeoutRef = useRef(null);
   const styles = createStyles(theme);
 
@@ -49,14 +55,27 @@ export default function ProductListScreen({ navigation }) {
     }, 5000);
   }
 
-  async function loadProducts(showLoading = true) {
+  async function loadProducts(showLoading = true, page = 1, append = false) {
     try {
-      if (showLoading) setLoading(true);
+      if (showLoading && !append) setLoading(true);
+      if (append) setLoadingMore(true);
+      
       const url = searchTerm 
-        ? `/products?search=${encodeURIComponent(searchTerm)}`
-        : "/products";
+        ? `/products?search=${encodeURIComponent(searchTerm)}&page=${page}&per_page=20`
+        : `/products?page=${page}&per_page=20`;
       const response = await api.get(url);
-      setProducts(response.data);
+      
+      const { items, pagination } = response.data;
+      
+      if (append) {
+        setAllProducts(prev => [...prev, ...items]);
+      } else {
+        setAllProducts(items);
+      }
+      
+      setCurrentPage(pagination.current_page);
+      setHasMore(pagination.has_next);
+      setTotalPages(pagination.pages);
     } catch (error) {
       console.error("Erro ao carregar produtos:", error);
       let errorMessage = "Não foi possível carregar os produtos.";
@@ -76,18 +95,57 @@ export default function ProductListScreen({ navigation }) {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
+    }
+  }
+  
+  const loadMoreProducts = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = currentPage + 1;
+      loadProducts(false, nextPage, true);
     }
   }
 
   useFocusEffect(
     useCallback(() => {
-      loadProducts();
+      setCurrentPage(1);
+      setHasMore(true);
+      loadProducts(true, 1, false);
     }, [])
   );
+  
+  useEffect(() => {
+    // Resetar paginação quando o termo de busca mudar
+    setCurrentPage(1);
+    setHasMore(true);
+    const timeoutId = setTimeout(() => {
+      loadProducts(true, 1, false);
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+  
+  // Aplicar filtros aos produtos
+  useEffect(() => {
+    let filtered = [...allProducts];
+    
+    // Filtro de estoque
+    if (filterEstoque === "com_estoque") {
+      filtered = filtered.filter(p => p.inventory > 0);
+    } else if (filterEstoque === "sem_estoque") {
+      filtered = filtered.filter(p => !p.inventory || p.inventory === 0);
+    } else if (filterEstoque === "estoque_baixo") {
+      filtered = filtered.filter(p => p.inventory > 0 && p.inventory < 10);
+    }
+    
+    setProducts(filtered);
+  }, [allProducts, filterEstoque]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadProducts(false);
+    setCurrentPage(1);
+    setHasMore(true);
+    loadProducts(false, 1, false);
   };
 
   function handleAdd() {
@@ -150,10 +208,15 @@ export default function ProductListScreen({ navigation }) {
     );
   }
 
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      StatusBar.setHidden(true, "fade");
+    }
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <View style={[styles.container, { paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }]}>
-        <StatusBar style={isDarkMode ? "light" : "dark"} translucent={true} />
+      <View style={styles.container}>
 
         {successMessage ? (
           <View style={styles.successBanner}>
@@ -164,7 +227,7 @@ export default function ProductListScreen({ navigation }) {
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por SKU, nome ou código de barras..."
+            placeholder="Buscar por SKU, nome ou EAN..."
             placeholderTextColor={theme.textSecondary}
             value={searchTerm}
             onChangeText={setSearchTerm}
@@ -176,6 +239,46 @@ export default function ProductListScreen({ navigation }) {
           </Pressable>
         </View>
 
+        <View style={styles.filtersContainer}>
+          <View style={styles.filterGroup}>
+            <Text style={styles.filterLabel}>Estoque:</Text>
+            <View style={styles.filterButtons}>
+              <Pressable
+                style={[styles.filterButton, filterEstoque === "todos" && styles.filterButtonActive]}
+                onPress={() => setFilterEstoque("todos")}
+              >
+                <Text style={[styles.filterButtonText, filterEstoque === "todos" && styles.filterButtonTextActive]}>
+                  Todos
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.filterButton, filterEstoque === "com_estoque" && styles.filterButtonActive]}
+                onPress={() => setFilterEstoque("com_estoque")}
+              >
+                <Text style={[styles.filterButtonText, filterEstoque === "com_estoque" && styles.filterButtonTextActive]}>
+                  Com estoque
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.filterButton, filterEstoque === "sem_estoque" && styles.filterButtonActive]}
+                onPress={() => setFilterEstoque("sem_estoque")}
+              >
+                <Text style={[styles.filterButtonText, filterEstoque === "sem_estoque" && styles.filterButtonTextActive]}>
+                  Sem estoque
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.filterButton, filterEstoque === "estoque_baixo" && styles.filterButtonActive]}
+                onPress={() => setFilterEstoque("estoque_baixo")}
+              >
+                <Text style={[styles.filterButtonText, filterEstoque === "estoque_baixo" && styles.filterButtonTextActive]}>
+                  Estoque baixo
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
         {loading ? (
           <ActivityIndicator size="large" style={styles.loading} />
         ) : (
@@ -183,12 +286,24 @@ export default function ProductListScreen({ navigation }) {
             data={products}
             keyExtractor={(item) => String(item.product_id)}
             renderItem={renderItem}
-            contentContainerStyle={
-              products.length === 0 && styles.emptyListContainer
-            }
+            style={styles.list}
+            contentContainerStyle={[
+              products.length === 0 && styles.emptyListContainer,
+              styles.listContent
+            ]}
             ListEmptyComponent={
               <Text style={styles.emptyText}>Nenhum produto cadastrado.</Text>
             }
+            ListFooterComponent={
+              loadingMore ? (
+                <View style={styles.loadingMoreContainer}>
+                  <ActivityIndicator size="small" color={theme.primary} />
+                  <Text style={styles.loadingMoreText}>Carregando mais produtos...</Text>
+                </View>
+              ) : null
+            }
+            onEndReached={loadMoreProducts}
+            onEndReachedThreshold={0.5}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
@@ -207,7 +322,6 @@ const createStyles = (theme) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: theme.background,
-    marginBottom: 12,
   },
   container: {
     flex: 1,
@@ -274,6 +388,12 @@ const createStyles = (theme) => StyleSheet.create({
   loading: {
     marginTop: 32,
   },
+  list: {
+    backgroundColor: theme.background,
+  },
+  listContent: {
+    backgroundColor: theme.background,
+  },
   emptyListContainer: {
     flexGrow: 1,
     justifyContent: "center",
@@ -281,6 +401,57 @@ const createStyles = (theme) => StyleSheet.create({
   },
   emptyText: {
     color: theme.textSecondary,
+  },
+  loadingMoreContainer: {
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  loadingMoreText: {
+    color: theme.textSecondary,
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  filtersContainer: {
+    marginBottom: 12,
+    gap: 12,
+  },
+  filterGroup: {
+    gap: 8,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: theme.text,
+    marginBottom: 4,
+  },
+  filterButtons: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: theme.inputBackground,
+    borderWidth: 1,
+    borderColor: theme.inputBorder,
+  },
+  filterButtonActive: {
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
+  },
+  filterButtonText: {
+    fontSize: 12,
+    color: theme.textSecondary,
+    fontWeight: "500",
+  },
+  filterButtonTextActive: {
+    color: "#FFF",
+    fontWeight: "600",
   },
 });
 

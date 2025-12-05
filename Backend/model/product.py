@@ -13,6 +13,7 @@ class Product(db.Model):
     cost = db.Column(db.Numeric(10, 2))
     update_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     inventory = db.Column(db.Integer, default=0)
+    ean = db.Column(db.String(20))
     
     listings = relationship('Listing', backref='product', cascade='all, delete-orphan')
     annotations = relationship('ProductAnnotation', backref='product', cascade='all, delete-orphan')
@@ -26,6 +27,7 @@ class Product(db.Model):
             'image': self.image,
             'cost': float(self.cost) if self.cost else None,
             'update_at': self.update_at.isoformat() if self.update_at else None,
-            'inventory': self.inventory
+            'inventory': self.inventory,
+            'ean': self.ean
         }
 

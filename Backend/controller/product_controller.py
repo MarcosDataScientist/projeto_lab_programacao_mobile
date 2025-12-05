@@ -8,13 +8,28 @@ product_bp = Blueprint('products', __name__)
 def get_products():
     try:
         search_term = request.args.get('search', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # Limitar per_page entre 1 e 100
+        per_page = max(1, min(per_page, 100))
         
         if search_term:
-            products = ProductService.search(search_term)
+            result = ProductService.search(search_term, page, per_page)
         else:
-            products = ProductService.get_all()
+            result = ProductService.get_all(page, per_page)
         
-        return jsonify([p.to_dict() for p in products]), 200
+        return jsonify({
+            'items': [p.to_dict() for p in result['items']],
+            'pagination': {
+                'total': result['total'],
+                'pages': result['pages'],
+                'current_page': result['current_page'],
+                'per_page': result['per_page'],
+                'has_next': result['has_next'],
+                'has_prev': result['has_prev']
+            }
+        }), 200
     except Exception as e:
         return handle_exception(e)
 

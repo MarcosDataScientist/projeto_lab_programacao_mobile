@@ -5,31 +5,87 @@ from sqlalchemy import or_
 
 class ListingService:
     @staticmethod
-    def get_all():
-        return Listing.query.all()
+    def get_all(page=1, per_page=20):
+        """Retorna anúncios paginados"""
+        pagination = Listing.query.paginate(
+            page=page, 
+            per_page=per_page, 
+            error_out=False
+        )
+        return {
+            'items': pagination.items,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
     
     @staticmethod
     def get_by_marketplace_item_id(marketplace_item_id):
         return Listing.query.get(marketplace_item_id)
     
     @staticmethod
-    def get_by_product_id(product_id):
-        return Listing.query.filter_by(product_id=product_id).all()
+    def get_by_product_id(product_id, page=1, per_page=20):
+        query = Listing.query.filter_by(product_id=product_id)
+        pagination = query.paginate(
+            page=page, 
+            per_page=per_page, 
+            error_out=False
+        )
+        return {
+            'items': pagination.items,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
     
     @staticmethod
-    def get_by_marketplace(marketplace):
-        return Listing.query.filter_by(marketplace=marketplace).all()
+    def get_by_marketplace(marketplace, page=1, per_page=20):
+        query = Listing.query.filter_by(marketplace=marketplace)
+        pagination = query.paginate(
+            page=page, 
+            per_page=per_page, 
+            error_out=False
+        )
+        return {
+            'items': pagination.items,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
     
     @staticmethod
-    def search(search_term):
-        """Busca anúncios pelo nome do produto"""
+    def search(search_term, page=1, per_page=20):
+        """Busca anúncios pelo nome do produto com paginação"""
         if not search_term:
-            return Listing.query.all()
+            return ListingService.get_all(page, per_page)
         
         search_pattern = f"%{search_term}%"
-        return Listing.query.join(Product).filter(
+        query = Listing.query.join(Product).filter(
             Product.name.ilike(search_pattern)
-        ).all()
+        )
+        pagination = query.paginate(
+            page=page, 
+            per_page=per_page, 
+            error_out=False
+        )
+        return {
+            'items': pagination.items,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
     
     @staticmethod
     def create(data):

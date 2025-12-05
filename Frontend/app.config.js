@@ -2,6 +2,10 @@ const path = require('path');
 const fs = require('fs');
 
 // Tentar ler o .env manualmente se dotenv não funcionar
+// Valores padrão para desenvolvimento:
+// - Android emulador: http://10.0.2.2:5000/api
+// - iOS simulador: http://localhost:5000/api
+// - Dispositivo físico: http://SEU_IP_LOCAL:5000/api (ex: http://192.168.1.100:5000/api)
 let apiBaseUrl = "http://localhost:5000/api";
 
 const envPath = path.resolve(__dirname, '.env');
@@ -55,7 +59,16 @@ module.exports = {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
-      edgeToEdgeEnabled: true
+      edgeToEdgeEnabled: true,
+      navigationBar: {
+        backgroundColor: "#00000000",
+        barStyle: "light-content"
+      },
+      statusBar: {
+        backgroundColor: "#00000000",
+        barStyle: "dark-content",
+        translucent: true
+      }
     },
     web: {
       favicon: "./assets/favicon.png"

@@ -10,17 +10,32 @@ def get_listings():
         search_term = request.args.get('search')
         product_id = request.args.get('product_id')
         marketplace = request.args.get('marketplace')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # Limitar per_page entre 1 e 100
+        per_page = max(1, min(per_page, 100))
         
         if search_term:
-            listings = ListingService.search(search_term)
+            result = ListingService.search(search_term, page, per_page)
         elif product_id:
-            listings = ListingService.get_by_product_id(int(product_id))
+            result = ListingService.get_by_product_id(int(product_id), page, per_page)
         elif marketplace:
-            listings = ListingService.get_by_marketplace(marketplace)
+            result = ListingService.get_by_marketplace(marketplace, page, per_page)
         else:
-            listings = ListingService.get_all()
+            result = ListingService.get_all(page, per_page)
         
-        return jsonify([l.to_dict() for l in listings]), 200
+        return jsonify({
+            'items': [l.to_dict() for l in result['items']],
+            'pagination': {
+                'total': result['total'],
+                'pages': result['pages'],
+                'current_page': result['current_page'],
+                'per_page': result['per_page'],
+                'has_next': result['has_next'],
+                'has_prev': result['has_prev']
+            }
+        }), 200
     except Exception as e:
         return handle_exception(e)
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   View,
   StatusBar,
@@ -13,9 +13,18 @@ import {
 } from "react-native";
 import { api } from "../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 export default function ProductFormScreen({ route, navigation }) {
   const { mode, product, onSuccess } = route.params || {};
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      StatusBar.setHidden(true, "fade");
+    }
+  }, []);
 
   const [sku, setSku] = useState(product?.sku || "");
   const [name, setName] = useState(product?.name || "");
@@ -27,6 +36,7 @@ export default function ProductFormScreen({ route, navigation }) {
   const [inventory, setInventory] = useState(
     product?.inventory != null ? String(product.inventory) : "0"
   );
+  const [ean, setEan] = useState(product?.ean || "");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [calculatedMargin, setCalculatedMargin] = useState(null);
@@ -43,6 +53,7 @@ export default function ProductFormScreen({ route, navigation }) {
       image: image.trim(),
       cost: costNumber,
       inventory: inventoryNumber,
+      ean: ean.trim() || null,
     };
 
     try {
@@ -57,7 +68,10 @@ export default function ProductFormScreen({ route, navigation }) {
         onSuccess?.("Produto cadastrado com sucesso!");
       }
 
-      navigation.goBack();
+      // Pequeno delay para garantir que a mensagem de sucesso seja exibida
+      setTimeout(() => {
+        navigation.goBack();
+      }, 100);
     } catch (error) {
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
@@ -107,8 +121,9 @@ export default function ProductFormScreen({ route, navigation }) {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
+          bounces={false}
         >
-          <StatusBar style={styles.statusBar} />
         <Text style={styles.title}>
           {mode === "edit" ? "Editar Produto" : "Novo Produto"}
         </Text>
@@ -127,9 +142,27 @@ export default function ProductFormScreen({ route, navigation }) {
             setErrors((prev) => ({ ...prev, sku: null }));
           }}
           placeholder="Código SKU"
+          placeholderTextColor={theme.textSecondary}
           maxLength={50}
+          color={theme.text}
         />
         {errors.sku && <Text style={styles.errorText}>{errors.sku}</Text>}
+
+        <Text style={styles.label}>EAN (Código de Barras)</Text>
+        <TextInput
+          style={styles.input}
+          value={ean}
+          onChangeText={(text) => {
+            setEan(text);
+            setErrors((prev) => ({ ...prev, ean: null }));
+          }}
+          placeholder="Código EAN"
+          placeholderTextColor={theme.textSecondary}
+          maxLength={20}
+          keyboardType="numeric"
+          color={theme.text}
+        />
+        {errors.ean && <Text style={styles.errorText}>{errors.ean}</Text>}
 
         <Text style={styles.label}>Nome *</Text>
         <TextInput
@@ -140,7 +173,9 @@ export default function ProductFormScreen({ route, navigation }) {
             setErrors((prev) => ({ ...prev, name: null }));
           }}
           placeholder="Nome do produto"
+          placeholderTextColor={theme.textSecondary}
           maxLength={255}
+          color={theme.text}
         />
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
@@ -150,8 +185,10 @@ export default function ProductFormScreen({ route, navigation }) {
           value={description}
           onChangeText={setDescription}
           placeholder="Descrição do produto"
+          placeholderTextColor={theme.textSecondary}
           multiline
           numberOfLines={4}
+          color={theme.text}
         />
 
         <Text style={styles.label}>URL da Imagem</Text>
@@ -160,7 +197,9 @@ export default function ProductFormScreen({ route, navigation }) {
           value={image}
           onChangeText={setImage}
           placeholder="https://exemplo.com/imagem.jpg"
+          placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
+          color={theme.text}
         />
 
         <Text style={styles.label}>Custo (R$)</Text>
@@ -172,7 +211,9 @@ export default function ProductFormScreen({ route, navigation }) {
             setCalculatedMargin(null);
           }}
           placeholder="0.00"
+          placeholderTextColor={theme.textSecondary}
           keyboardType="decimal-pad"
+          color={theme.text}
         />
 
         <Text style={styles.label}>Estoque</Text>
@@ -181,7 +222,9 @@ export default function ProductFormScreen({ route, navigation }) {
           value={inventory}
           onChangeText={setInventory}
           placeholder="0"
+          placeholderTextColor={theme.textSecondary}
           keyboardType="numeric"
+          color={theme.text}
         />
 
         {/* Calculadora de Margem */}
@@ -193,7 +236,9 @@ export default function ProductFormScreen({ route, navigation }) {
             value={testPrice}
             onChangeText={setTestPrice}
             placeholder="Digite um preço para calcular a margem"
+            placeholderTextColor={theme.textSecondary}
             keyboardType="decimal-pad"
+            color={theme.text}
           />
           <Pressable style={styles.calculateButton} onPress={calculateMargin}>
             <Text style={styles.calculateButtonText}>Calcular Margem</Text>
@@ -221,10 +266,10 @@ export default function ProductFormScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
   },
   keyboardView: {
     flex: 1,
@@ -232,35 +277,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.background,
   },
   scrollContent: {
     paddingBottom: 20,
-  },
-  statusBar: {
-    barStyle: "light-content",
   },
   title: {
     fontSize: 24,
     fontWeight: "700",
     marginTop: 12,
+    color: theme.text,
   },
   errorBanner: {
-    backgroundColor: "#FEE2E2",
+    backgroundColor: theme.error + "20",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
+    borderColor: theme.error,
   },
   errorBannerText: {
-    color: "#B91C1C",
+    color: theme.error,
     fontSize: 14,
     fontWeight: "500",
   },
   errorText: {
-    color: "#B91C1C",
+    color: theme.error,
     fontSize: 12,
     marginTop: 4,
   },
@@ -269,34 +312,37 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 12,
     marginBottom: 4,
+    color: theme.text,
   },
   input: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.inputBackground,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.inputBorder,
+    color: theme.text,
   },
   textArea: {
     minHeight: 100,
     textAlignVertical: "top",
   },
   marginCalculator: {
-    backgroundColor: "#FFF",
+    backgroundColor: theme.surface,
     borderRadius: 8,
     padding: 16,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: theme.border,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 12,
+    color: theme.text,
   },
   calculateButton: {
-    backgroundColor: "#10B981",
+    backgroundColor: theme.success,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -310,24 +356,27 @@ const styles = StyleSheet.create({
   marginResult: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: "#D1FAE5",
+    backgroundColor: theme.success + "20",
     borderRadius: 8,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: theme.success,
   },
   marginLabel: {
     fontSize: 14,
-    color: "#065F46",
+    color: theme.success,
     marginBottom: 4,
+    fontWeight: "500",
   },
   marginValue: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#065F46",
+    color: theme.success,
   },
   button: {
     marginTop: 24,
     marginBottom: 24,
-    backgroundColor: "#2563EB",
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",

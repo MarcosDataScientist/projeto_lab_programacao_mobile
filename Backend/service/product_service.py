@@ -4,27 +4,57 @@ from sqlalchemy import or_
 
 class ProductService:
     @staticmethod
-    def get_all():
-        return Product.query.all()
+    def get_all(page=1, per_page=20):
+        """Retorna produtos paginados"""
+        pagination = Product.query.paginate(
+            page=page, 
+            per_page=per_page, 
+            error_out=False
+        )
+        return {
+            'items': pagination.items,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
     
     @staticmethod
     def get_by_id(product_id):
         return Product.query.get(product_id)
     
     @staticmethod
-    def search(search_term):
-        """Busca produtos por SKU, nome ou código de barras"""
+    def search(search_term, page=1, per_page=20):
+        """Busca produtos por SKU, nome, EAN ou código de barras com paginação"""
         if not search_term:
-            return Product.query.all()
+            return ProductService.get_all(page, per_page)
         
         search_pattern = f"%{search_term}%"
-        return Product.query.filter(
+        query = Product.query.filter(
             or_(
                 Product.sku.ilike(search_pattern),
                 Product.name.ilike(search_pattern),
-                Product.sku == search_term 
+                Product.sku == search_term,
+                Product.ean == search_term,
+                Product.ean.ilike(search_pattern)
             )
-        ).all()
+        )
+        pagination = query.paginate(
+            page=page, 
+            per_page=per_page, 
+            error_out=False
+        )
+        return {
+            'items': pagination.items,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
     
     @staticmethod
     def create(data):
@@ -34,7 +64,8 @@ class ProductService:
             description=data.get('description'),
             image=data.get('image'),
             cost=data.get('cost'),
-            inventory=data.get('inventory', 0)
+            inventory=data.get('inventory', 0),
+            ean=data.get('ean')
         )
         db.session.add(product)
         db.session.commit()
@@ -58,6 +89,8 @@ class ProductService:
             product.cost = data['cost']
         if 'inventory' in data:
             product.inventory = data['inventory']
+        if 'ean' in data:
+            product.ean = data['ean']
         
         db.session.commit()
         return product
